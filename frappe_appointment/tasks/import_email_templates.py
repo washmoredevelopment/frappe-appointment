@@ -62,3 +62,33 @@ def import_email_templates():
             print(f"Error importing email template {email_template['name']}: {e}")
             continue
     print("Email Templates Imported")
+
+    # Update Appointment Settings with default email templates
+    update_appointment_settings_defaults()
+
+
+def update_appointment_settings_defaults():
+    """
+    Populate Appointment Settings with default email template references.
+    Only sets values for fields that are currently empty to avoid overwriting user customizations.
+    """
+    settings = frappe.get_single("Appointment Settings")
+    updated = False
+
+    template_mappings = {
+        "default_personal_email_template": "[Default] Appointment Scheduled",
+        "default_group_email_template": "[Default] Appointment Scheduled",
+        "default_availability_alerts_email_template": "[Default] Appointment Group Availability",
+        "personal_organisers_email_template": "[Default] Appointment Scheduled - Organisers",
+    }
+
+    for field, template_name in template_mappings.items():
+        if not settings.get(field) and frappe.db.exists("Email Template", template_name):
+            settings.set(field, template_name)
+            updated = True
+
+    if updated:
+        settings.save(ignore_permissions=True)
+        print("Appointment Settings updated with default email templates")
+    else:
+        print("Appointment Settings already configured, skipping update")
