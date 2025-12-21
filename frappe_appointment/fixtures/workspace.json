@@ -1,0 +1,128 @@
+[
+ {
+  "charts": [],
+  "content": "[{\"id\":\"ApptHeader1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Access</b></span>\",\"col\":12}},{\"id\":\"ApptShortcut1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Availability\",\"col\":3}},{\"id\":\"ApptShortcut2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Appointment Groups\",\"col\":3}},{\"id\":\"ApptShortcut3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Appointment Settings\",\"col\":3}},{\"id\":\"ApptSpacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"ApptHeader2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Masters</b></span>\",\"col\":12}},{\"id\":\"ApptCard1\",\"type\":\"card\",\"data\":{\"card_name\":\"Availability\",\"col\":4}},{\"id\":\"ApptCard2\",\"type\":\"card\",\"data\":{\"card_name\":\"Group Appointments\",\"col\":4}},{\"id\":\"ApptCard3\",\"type\":\"card\",\"data\":{\"card_name\":\"Events\",\"col\":4}}]",
+  "creation": "2025-12-20 12:00:00.000000",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "for_user": "",
+  "hide_custom": 0,
+  "icon": "calendar",
+  "idx": 0,
+  "indicator_color": "",
+  "is_hidden": 0,
+  "label": "Appointments",
+  "links": [
+   {
+    "hidden": 0,
+    "is_query_report": 0,
+    "label": "Availability",
+    "link_count": 0,
+    "onboard": 0,
+    "type": "Card Break"
+   },
+   {
+    "dependencies": "",
+    "hidden": 0,
+    "is_query_report": 0,
+    "label": "User Appointment Availability",
+    "link_count": 0,
+    "link_to": "User Appointment Availability",
+    "link_type": "DocType",
+    "onboard": 0,
+    "type": "Link"
+   },
+   {
+    "hidden": 0,
+    "is_query_report": 0,
+    "label": "Group Appointments",
+    "link_count": 0,
+    "onboard": 0,
+    "type": "Card Break"
+   },
+   {
+    "dependencies": "",
+    "hidden": 0,
+    "is_query_report": 0,
+    "label": "Appointment Group",
+    "link_count": 0,
+    "link_to": "Appointment Group",
+    "link_type": "DocType",
+    "onboard": 0,
+    "type": "Link"
+   },
+   {
+    "dependencies": "",
+    "hidden": 0,
+    "is_query_report": 0,
+    "label": "Appointment Settings",
+    "link_count": 0,
+    "link_to": "Appointment Settings",
+    "link_type": "DocType",
+    "onboard": 0,
+    "type": "Link"
+   },
+   {
+    "hidden": 0,
+    "is_query_report": 0,
+    "label": "Events",
+    "link_count": 0,
+    "onboard": 0,
+    "type": "Card Break"
+   },
+   {
+    "dependencies": "",
+    "hidden": 0,
+    "is_query_report": 0,
+    "label": "Event",
+    "link_count": 0,
+    "link_to": "Event",
+    "link_type": "DocType",
+    "onboard": 0,
+    "type": "Link"
+   }
+  ],
+  "modified": "2025-12-20 12:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Frappe Appointment",
+  "name": "Appointments",
+  "number_cards": [],
+  "owner": "Administrator",
+  "parent_page": "",
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": "",
+  "roles": [],
+  "sequence_id": 10,
+  "shortcuts": [
+   {
+    "color": "Grey",
+    "doc_view": "List",
+    "label": "My Availability",
+    "link_to": "User Appointment Availability",
+    "stats_filter": "",
+    "type": "DocType"
+   },
+   {
+    "color": "Grey",
+    "doc_view": "List",
+    "label": "Appointment Groups",
+    "link_to": "Appointment Group",
+    "stats_filter": "",
+    "type": "DocType"
+   },
+   {
+    "color": "Grey",
+    "doc_view": "",
+    "label": "Appointment Settings",
+    "link_to": "Appointment Settings",
+    "stats_filter": "",
+    "type": "DocType"
+   }
+  ],
+  "title": "Appointments"
+ }
+]
+
+

@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ArrowLeft, CircleAlert, Clock } from "lucide-react";
@@ -40,6 +40,9 @@ import SuccessAlert from "@/components/success-alert";
 import MetaTags from "@/components/meta-tags";
 import { CalendarWrapper } from "@/components/calendar-wrapper";
 import { useMeetingReducer } from "./reducer";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/avatar";
+import { Input } from "@/components/input";
+import { Label } from "@/components/label";
 
 const GroupAppointment = () => {
   const { groupId } = useParams();
@@ -50,6 +53,25 @@ const GroupAppointment = () => {
   const event_token = searchParams.get("event_token") || "";
   const [timeFormat, setTimeFormat] = useState<TimeFormat>("12h");
   const [state, dispatch] = useMeetingReducer();
+
+  // Check if this is a public booking (no email params in URL)
+  const isPublicBooking = useMemo(() => {
+    const eventParticipants = searchParams.get("event_participants");
+    return !eventParticipants || eventParticipants === "[]";
+  }, [searchParams]);
+
+  // Whether to show guest form (public booking enabled and no email params)
+  const showGuestForm = useMemo(() => {
+    return isPublicBooking && state.meetingData.allow_public_booking;
+  }, [isPublicBooking, state.meetingData.allow_public_booking]);
+
+  // Validate guest form
+  const isGuestFormValid = useMemo(() => {
+    if (!showGuestForm) return true;
+    return state.guestInfo.name.trim() !== "" && 
+           state.guestInfo.email.trim() !== "" && 
+           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.guestInfo.email);
+  }, [showGuestForm, state.guestInfo]);
 
   const {
     data,
@@ -163,7 +185,7 @@ const GroupAppointment = () => {
   };
 
   const scheduleMeeting = () => {
-    const meetingData = {
+    const meetingData: Record<string, any> = {
       ...Object.fromEntries(searchParams),
       appointment_group_id: groupId,
       date: new Intl.DateTimeFormat("en-CA", {
@@ -177,6 +199,12 @@ const GroupAppointment = () => {
       start_time: state.selectedSlot!.start_time,
       end_time: state.selectedSlot!.end_time,
     };
+
+    // Add guest info for public bookings
+    if (showGuestForm) {
+      meetingData.user_name = state.guestInfo.name;
+      meetingData.user_email = state.guestInfo.email;
+    }
 
     bookMeeting(meetingData)
       .then((data) => {
@@ -238,12 +266,64 @@ const GroupAppointment = () => {
               <GroupMeetSkeleton />
             ) : (
               <div className="flex flex-col w-full lg:w-3/4 gap-3 ">
-                <Typography
-                  variant="h2"
-                  className="text-3xl font-semibold text-left w-full capitalize"
-                >
-                  {validTitle(state.meetingData.title || state.meetingData.appointment_group_id)}
-                </Typography>
+                {/* App Logo */}
+                {state.meetingData.app_logo && (
+                  <div className="mb-2">
+                    <img
+                      src={state.meetingData.app_logo}
+                      alt="Logo"
+                      className="h-8 w-auto object-contain"
+                    />
+                  </div>
+                )}
+                
+                {/* Meeting Title */}
+                <div className="flex flex-col gap-2">
+                  <Typography
+                    variant="h2"
+                    className="text-3xl font-semibold text-left w-full capitalize"
+                  >
+                    {validTitle(state.meetingData.title || state.meetingData.appointment_group_id)}
+                  </Typography>
+                  
+                  {/* Member Avatars */}
+                  {state.meetingData.members && state.meetingData.members.length > 0 && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <div className="flex -space-x-2">
+                        {state.meetingData.members.slice(0, 5).map((member, index) => (
+                          <Tooltip key={index}>
+                            <TooltipTrigger>
+                              <Avatar className="h-8 w-8 border-2 border-background">
+                                <AvatarImage
+                                  src={member.image || undefined}
+                                  alt={member.name}
+                                  className="object-cover"
+                                />
+                                <AvatarFallback className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+                                  {member.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {member.name}
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                        {state.meetingData.members.length > 5 && (
+                          <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs text-muted-foreground">
+                            +{state.meetingData.members.length - 5}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {state.meetingData.description && (
+                    <Typography className="text-sm text-muted-foreground mt-1">
+                      {state.meetingData.description}
+                    </Typography>
+                  )}
+                </div>
                 {state.meetingData && (
                   <div className="w-full flex flex-col gap-2 mt-3">
                     {state.meetingData.meeting_details &&
@@ -304,6 +384,51 @@ const GroupAppointment = () => {
                             Meeting
                           </TooltipContent>
                         </Tooltip>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Guest Booking Form */}
+                {showGuestForm && (
+                  <div className="w-full flex flex-col gap-4 mt-4 p-4 rounded-lg bg-muted/50 border">
+                    <Typography variant="h3" className="text-sm font-semibold">
+                      Your Information
+                    </Typography>
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="guest-name">Name *</Label>
+                        <Input
+                          id="guest-name"
+                          placeholder="Enter your name"
+                          value={state.guestInfo.name}
+                          onChange={(e) =>
+                            dispatch({
+                              type: "SET_GUEST_INFO",
+                              payload: { name: e.target.value },
+                            })
+                          }
+                          disabled={loading}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="guest-email">Email *</Label>
+                        <Input
+                          id="guest-email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={state.guestInfo.email}
+                          onChange={(e) =>
+                            dispatch({
+                              type: "SET_GUEST_INFO",
+                              payload: { email: e.target.value },
+                            })
+                          }
+                          disabled={loading}
+                        />
+                        <Typography className="text-xs text-muted-foreground">
+                          You'll receive a calendar invite at this email
+                        </Typography>
                       </div>
                     </div>
                   </div>
@@ -396,7 +521,7 @@ const GroupAppointment = () => {
                     (state.selectedSlot?.start_time &&
                     state.selectedSlot?.end_time
                       ? false
-                      : true) || loading
+                      : true) || loading || !isGuestFormValid
                   }
                   className={cn(
                     "bg-blue-500 dark:bg-blue-400 flex hover:bg-blue-500 dark:hover:bg-blue-400 w-fit px-10",
@@ -471,11 +596,12 @@ const GroupAppointment = () => {
                     )}
                   </div>
                   <Button
-                    disabled={loading}
+                    disabled={loading || !isGuestFormValid}
                     className={cn(
                       "bg-blue-500 dark:bg-blue-400 hover:bg-blue-500 dark:hover:bg-blue-400 lg:!mt-0 max-lg:w-full hidden",
                       state.selectedSlot?.start_time &&
                         state.selectedSlot.end_time &&
+                        isGuestFormValid &&
                         "flex",
                       "max-md:hidden"
                     )}

@@ -112,6 +112,18 @@ fixtures = [
             ]
         ],
     },
+    {
+        "dt": "Workspace",
+        "filters": [
+            [
+                "module",
+                "in",
+                {
+                    "Frappe Appointment",
+                },
+            ]
+        ],
+    },
 ]
 
 # Installation

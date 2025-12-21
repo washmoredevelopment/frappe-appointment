@@ -1,3 +1,9 @@
+export interface MeetingMember {
+  name: string;
+  image: string | null;
+  is_mandatory: boolean;
+}
+
 export interface MeetingData {
   appointment_group_id: string;
   all_available_slots_for_data: any[]; // Define a more specific type if possible
@@ -19,7 +25,14 @@ export interface MeetingData {
     round: string;
   };
   booked_slot?: bookedSlotType;
-  title?:string;
+  title?: string;
+  // Branding fields
+  app_logo?: string;
+  description?: string;
+  members?: MeetingMember[];
+  // Public booking
+  allow_public_booking?: boolean;
+  rescheduling_allowed?: boolean;
 }
 
 export interface bookedSlotType {
