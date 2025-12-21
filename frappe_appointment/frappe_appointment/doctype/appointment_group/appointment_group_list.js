@@ -78,12 +78,18 @@ function copy_to_clipboard(text) {
   });
 }
 
+function escape_html(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 function show_booking_links_dialog(links) {
   let html = "<ul style='list-style: none; padding: 0;'>";
-  links.forEach((item) => {
+  links.forEach((item, index) => {
     html += `<li style='margin-bottom: 10px; display: flex; align-items: center; gap: 10px;'>
-      <strong>${item.name}</strong>
-      <button class='btn btn-xs btn-default' onclick="navigator.clipboard.writeText('${item.link}').then(() => frappe.show_alert({message: __('Copied!'), indicator: 'green'}))">
+      <strong>${escape_html(item.name)}</strong>
+      <button class='btn btn-xs btn-default copy-link-btn' data-index='${index}'>
         ${__("Copy")}
       </button>
     </li>`;
@@ -101,5 +107,15 @@ function show_booking_links_dialog(links) {
   });
 
   dialog.fields_dict.links_html.$wrapper.html(html);
+  
+  // Attach click handlers safely using event delegation
+  dialog.fields_dict.links_html.$wrapper.on("click", ".copy-link-btn", function () {
+    const index = parseInt($(this).data("index"), 10);
+    const link = links[index].link;
+    navigator.clipboard.writeText(link).then(() => {
+      frappe.show_alert({ message: __("Copied!"), indicator: "green" });
+    });
+  });
+  
   dialog.show();
 }
