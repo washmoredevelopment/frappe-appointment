@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useFrappeGetCall } from "frappe-react-sdk";
 
@@ -21,10 +21,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/tooltip";
 import Typography from "@/components/typography";
 import MetaTags from "@/components/meta-tags";
 import { Info } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 
 const Appointment = () => {
   const { meetId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { theme } = useTheme();
 
   const type = searchParams.get("type");
 
@@ -42,6 +44,40 @@ const Appointment = () => {
     meetingDurationCards,
     setMeetingDurationCards,
   } = useAppContext();
+
+  // Determine if we're in dark mode
+  const isDark = useMemo(() => {
+    if (theme === "dark") return true;
+    if (theme === "light") return false;
+    // System theme - check media query
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }, [theme]);
+
+  // Get header background style based on branding settings
+  const headerStyle = useMemo(() => {
+    const branding = userInfo.branding;
+    
+    // Priority 1: Cover image
+    if (branding?.cover_image) {
+      const overlayColor = isDark ? 'rgba(24,24,27,0.9)' : 'rgba(255,255,255,0.85)';
+      return {
+        backgroundImage: `linear-gradient(to bottom, ${overlayColor}, ${isDark ? 'rgb(24,24,27)' : 'rgb(255,255,255)'}), url(${branding.cover_image})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    }
+    
+    // Priority 2: Custom color
+    const customColor = isDark ? branding?.header_color_dark : branding?.header_color_light;
+    if (customColor) {
+      return {
+        background: `linear-gradient(to bottom, ${customColor}, transparent)`,
+      };
+    }
+    
+    // Priority 3: Default (handled via className)
+    return {};
+  }, [userInfo.branding, isDark]);
 
   const { data, isLoading, error } = useFrappeGetCall(
     "frappe_appointment.api.personal_meet.get_meeting_windows",
@@ -73,6 +109,7 @@ const Appointment = () => {
         socialProfiles: [],
         meetingProvider: data?.message?.meeting_provider,
         banner_image: data?.message?.banner_image,
+        branding: data?.message?.branding || {},
       });
       setMeetingDurationCards(data?.message?.durations);
     }
@@ -95,7 +132,14 @@ const Appointment = () => {
               {isLoading ? (
                 <ProfileSkeleton />
               ) : (
-                <div className="w-full flex flex-col gap-4 p-4 md:p-6 max-lg:md:pt-10 md:px-4 justify-center items-center bg-gradient-to-b from-blue-100 to-transparent dark:bg-gradient-to-b dark:from-zinc-800 md:rounded-2xl">
+                <div 
+                  className={`w-full flex flex-col gap-4 p-4 md:p-6 max-lg:md:pt-10 md:px-4 justify-center items-center md:rounded-2xl ${
+                    Object.keys(headerStyle).length === 0 
+                      ? 'bg-gradient-to-b from-blue-100 to-transparent dark:from-zinc-800' 
+                      : ''
+                  }`}
+                  style={headerStyle}
+                >
                   <Avatar className="md:h-32 md:w-32 h-24 w-24 object-cover mb-4 md:mb-0 hover:outline outline-blue-300 dark:outline-blue-400/80 transition-all duration-100">
                     <AvatarImage
                       src={userInfo.userImage}
@@ -188,7 +232,7 @@ const Appointment = () => {
       ) : (
         <Booking type={type} banner={userInfo.banner_image} />
       )}
-      <PoweredBy />
+      <PoweredBy appLogo={userInfo.branding?.app_logo} />
     </>
   );
 };

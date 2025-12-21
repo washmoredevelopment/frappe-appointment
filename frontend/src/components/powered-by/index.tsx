@@ -1,27 +1,20 @@
-import Typography from "../typography";
+interface PoweredByProps {
+  appLogo?: string;
+}
 
-const PoweredBy = () => {
+const PoweredBy = ({ appLogo }: PoweredByProps) => {
   return (
-    <>
-      <div className="flexitems-center w-full justify-center shrink-0">
-        <Typography
-          variant="h5"
-          className="flex items-center py-5 max-md:pb-20 max-lg:py-2 justify-center gap-1"
-        >
-          <Typography variant="p"> Powered by</Typography>
-          <Typography variant="p">
-            <a
-              href="https://github.com/rtCamp/frappe-appointment/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold hover:underline text-blue-400"
-            >
-              Frappe Appointment
-            </a>
-          </Typography>
-        </Typography>
-      </div>
-    </>
+    <div className="flex items-center w-full justify-center py-5 max-md:pb-20 max-lg:py-2">
+      {appLogo ? (
+        <img 
+          src={appLogo} 
+          alt="Logo" 
+          className="h-8 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity"
+        />
+      ) : (
+        <div className="h-8" /> 
+      )}
+    </div>
   );
 };
 

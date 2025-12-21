@@ -24,12 +24,21 @@ def get_time_slots(appointment_group_id: str, date: str, user_timezone_offset: s
     if time_slots and isinstance(time_slots, dict):
         time_slots["title"] = appointment_group.group_name
         time_slots["rescheduling_allowed"] = bool(appointment_group.allow_rescheduling)
-        # Add branding and public booking fields
+        # Add description and public booking fields
         time_slots["description"] = appointment_group.description
         time_slots["allow_public_booking"] = bool(appointment_group.allow_public_booking)
         
-        # Get app logo from Website Settings
-        time_slots["app_logo"] = frappe.db.get_single_value("Website Settings", "app_logo")
+        # Get branding settings from Appointment Settings
+        try:
+            settings = frappe.get_single("Appointment Settings")
+            time_slots["branding"] = {
+                "cover_image": settings.cover_image,
+                "header_color_light": settings.header_color_light,
+                "header_color_dark": settings.header_color_dark,
+                "app_logo": frappe.db.get_single_value("Website Settings", "app_logo"),
+            }
+        except Exception:
+            time_slots["branding"] = {}
         
         # Get member profile pictures
         members = []

@@ -19,6 +19,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 // Define the types for the userInfo and MeetingProviderTypes
 type MeetingProviderTypes = "Google Meet" | "Zoom";
 
+interface Branding {
+  cover_image?: string;
+  header_color_light?: string;
+  header_color_dark?: string;
+  app_logo?: string;
+}
+
 interface UserInfo {
   name: string;
   designation: string;
@@ -26,7 +33,8 @@ interface UserInfo {
   userImage: string;
   socialProfiles: Profile[];
   meetingProvider: MeetingProviderTypes;
-  banner_image:string;
+  banner_image: string;
+  branding?: Branding;
 }
 
 type durationCard = {
@@ -72,7 +80,8 @@ const initialAppContextType: AppContextType = {
     userImage: "",
     socialProfiles: [],
     meetingProvider: "Zoom",
-    banner_image:"",
+    banner_image: "",
+    branding: {},
   },
   setMeetingId: () => {},
   setDuration: () => {},

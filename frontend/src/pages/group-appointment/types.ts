@@ -4,6 +4,13 @@ export interface MeetingMember {
   is_mandatory: boolean;
 }
 
+export interface Branding {
+  cover_image?: string;
+  header_color_light?: string;
+  header_color_dark?: string;
+  app_logo?: string;
+}
+
 export interface MeetingData {
   appointment_group_id: string;
   all_available_slots_for_data: any[]; // Define a more specific type if possible
@@ -27,7 +34,7 @@ export interface MeetingData {
   booked_slot?: bookedSlotType;
   title?: string;
   // Branding fields
-  app_logo?: string;
+  branding?: Branding;
   description?: string;
   members?: MeetingMember[];
   // Public booking
