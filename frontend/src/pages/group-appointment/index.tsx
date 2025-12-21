@@ -555,14 +555,14 @@ const GroupAppointment = () => {
                                           type: "SET_SELECTED_SLOT",
                                           payload: selectedSlot,
                                         });
-                                        // For public bookings, show the form
-                                        // For non-public bookings (with email params), schedule directly
-                                        if (showGuestForm) {
-                                          dispatch({ type: "SET_SHOW_MEETING_FORM", payload: true });
-                                        } else if (reschedule && event_token) {
+                                        // Priority 1: Reschedule flow - just select slot, button will appear
+                                        if (reschedule && event_token) {
                                           // Handle reschedule - select slot, button will appear below
+                                        } else if (showGuestForm) {
+                                          // Priority 2: Public bookings - show the form
+                                          dispatch({ type: "SET_SHOW_MEETING_FORM", payload: true });
                                         } else {
-                                          // Non-public booking - schedule directly
+                                          // Priority 3: Non-public booking (with email params) - schedule directly
                                           scheduleMeeting(selectedSlot);
                                         }
                                       }}
