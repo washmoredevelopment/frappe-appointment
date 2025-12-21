@@ -6,6 +6,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "booking_page_branding_section",
+  "cover_image",
+  "column_break_branding",
+  "header_color_light",
+  "header_color_dark",
   "default_email_templates_section",
   "default_personal_email_template",
   "default_group_email_template",
@@ -24,6 +29,33 @@
   "zoom_access_token"
  ],
  "fields": [
+  {
+   "fieldname": "booking_page_branding_section",
+   "fieldtype": "Section Break",
+   "label": "Booking Page Branding"
+  },
+  {
+   "description": "Upload a cover image for the personal booking page header. If not set, the header color will be used instead.",
+   "fieldname": "cover_image",
+   "fieldtype": "Attach Image",
+   "label": "Cover Image"
+  },
+  {
+   "fieldname": "column_break_branding",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Header background color for light mode. Used when no cover image is set.",
+   "fieldname": "header_color_light",
+   "fieldtype": "Color",
+   "label": "Header Color (Light Mode)"
+  },
+  {
+   "description": "Header background color for dark mode. Used when no cover image is set.",
+   "fieldname": "header_color_dark",
+   "fieldtype": "Color",
+   "label": "Header Color (Dark Mode)"
+  },
   {
    "fieldname": "default_email_templates_section",
    "fieldtype": "Section Break",

@@ -1,7 +1,7 @@
 /**
  * External dependencies.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { format, formatDate } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -44,6 +44,7 @@ import SuccessAlert from "@/components/success-alert";
 import { Icon } from "@/components/icons";
 import { CalendarWrapper } from "@/components/calendar-wrapper";
 import { useBookingReducer } from "../reducer";
+import { useTheme } from "@/components/theme-provider";
 
 interface BookingProp {
   type: string;
@@ -63,6 +64,7 @@ const Booking = ({ type, banner }: BookingProp) => {
     setSelectedSlot,
     meetingId,
   } = useAppContext();
+  const { theme } = useTheme();
   const [state, dispatch] = useBookingReducer();
   const containerRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -70,6 +72,50 @@ const Booking = ({ type, banner }: BookingProp) => {
   const date = searchParams.get("date");
   const reschedule = searchParams.get("reschedule") || "";
   const event_token = searchParams.get("event_token") || "";
+
+  // Determine if we're in dark mode
+  const isDark = useMemo(() => {
+    if (theme === "dark") return true;
+    if (theme === "light") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }, [theme]);
+
+  // Get header background style based on branding settings
+  const headerStyle = useMemo(() => {
+    const branding = userInfo.branding;
+    
+    // Priority 1: Cover image from branding settings
+    if (branding?.cover_image) {
+      return {
+        backgroundImage: `url(${branding.cover_image})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    }
+    
+    // Priority 2: Banner prop (user's banner_image)
+    if (banner) {
+      return {
+        backgroundImage: `url(${window.location.origin}${encodeURI(banner)})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    }
+    
+    // Priority 3: Custom color from branding
+    const customColor = isDark ? branding?.header_color_dark : branding?.header_color_light;
+    if (customColor) {
+      return {
+        backgroundColor: customColor,
+      };
+    }
+    
+    // Priority 4: Default (handled via className)
+    return {};
+  }, [userInfo.branding, banner, isDark]);
+
+  // Check if using default styling (no custom branding)
+  const useDefaultStyle = Object.keys(headerStyle).length === 0;
 
   const handleBackNavigation = () => {
     navigate(location.pathname, { replace: true });
@@ -226,18 +272,10 @@ const Booking = ({ type, banner }: BookingProp) => {
             {/* Banner */}
             <div
               className={cn(
-                "w-full md:rounded-xl md:rounded-b-none relative bg-blue-100 dark:bg-zinc-800 h-40 max-md:mb-20 md:mb-12",
-                banner && "bg-cover bg-center bg-no-repeat"
+                "w-full md:rounded-xl md:rounded-b-none relative h-40 max-md:mb-20 md:mb-12",
+                useDefaultStyle && "bg-blue-100 dark:bg-zinc-800"
               )}
-              style={
-                banner
-                  ? {
-                      backgroundImage: `url(${
-                        window.location.origin
-                      }${encodeURI(banner)})`,
-                    }
-                  : {}
-              }
+              style={headerStyle}
             >
               {/* avatar */}
               <Avatar className="h-28 w-28 md:h-32 md:w-32 object-cover absolute bottom-0 translate-y-1/2 md:left-24 max-md:left-5 outline outline-white dark:outline-background">

@@ -50,6 +50,19 @@ def get_meeting_windows(slug):
         {"id": duration.name, "label": duration.title, "duration": duration.duration} for duration in all_durations
     ]
 
+    # Get branding settings from Appointment Settings
+    branding = {}
+    try:
+        settings = frappe.get_single("Appointment Settings")
+        branding = {
+            "cover_image": settings.cover_image,
+            "header_color_light": settings.header_color_light,
+            "header_color_dark": settings.header_color_dark,
+            "app_logo": frappe.db.get_single_value("Website Settings", "app_logo"),
+        }
+    except Exception:
+        pass
+
     return {
         "full_name": full_name,
         "profile_pic": profile_pic,
@@ -58,6 +71,7 @@ def get_meeting_windows(slug):
         "company": company,
         "meeting_provider": meeting_provider,
         "durations": durations,
+        "branding": branding,
     }, 200
 
 

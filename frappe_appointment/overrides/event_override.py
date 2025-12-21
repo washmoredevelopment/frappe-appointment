@@ -529,7 +529,8 @@ def _create_event_for_appointment_group(
         if personal:
             event_info["subject"] = "Personal Meeting " + now()
         else:
-            event_info["subject"] = appointment_group.name + " " + now()
+            # Use group_name (display name) instead of name (slug)
+            event_info["subject"] = (appointment_group.group_name or appointment_group.name) + " " + now()
 
     if not vaild_date(get_datetime(date), appointment_group)["is_valid"]:
         return frappe.throw(_("Invalid Date"))

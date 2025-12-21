@@ -11,6 +11,11 @@ import { slotType } from "@/context/app";
 import { MeetingData } from "./types";
 import { BookingResponseType } from "@/lib/types";
 
+interface GuestInfo {
+  name: string;
+  email: string;
+}
+
 interface State {
   timeZone: string;
   selectedDate: Date;
@@ -19,8 +24,10 @@ interface State {
   expanded: boolean;
   isMobileView: boolean;
   appointmentScheduled: boolean;
+  showMeetingForm: boolean;
   meetingData: MeetingData;
   bookingResponse: BookingResponseType;
+  guestInfo: GuestInfo;
 }
 
 type Action =
@@ -31,8 +38,10 @@ type Action =
   | { type: "SET_EXPANDED"; payload: boolean }
   | { type: "SET_MOBILE_VIEW"; payload: boolean }
   | { type: "SET_APPOINTMENT_SCHEDULED"; payload: boolean }
+  | { type: "SET_SHOW_MEETING_FORM"; payload: boolean }
   | { type: "SET_MEETING_DATA"; payload: MeetingData }
-  | { type: "SET_BOOKING_RESPONSE"; payload: BookingResponseType };
+  | { type: "SET_BOOKING_RESPONSE"; payload: BookingResponseType }
+  | { type: "SET_GUEST_INFO"; payload: Partial<GuestInfo> };
 
 const actionHandlers: Record<
   Action["type"],
@@ -48,10 +57,18 @@ const actionHandlers: Record<
     ...state,
     appointmentScheduled: payload,
   }),
+  SET_SHOW_MEETING_FORM: (state, payload) => ({
+    ...state,
+    showMeetingForm: payload,
+  }),
   SET_MEETING_DATA: (state, payload) => ({ ...state, meetingData: payload }),
   SET_BOOKING_RESPONSE: (state, payload) => ({
     ...state,
     bookingResponse: payload,
+  }),
+  SET_GUEST_INFO: (state, payload) => ({
+    ...state,
+    guestInfo: { ...state.guestInfo, ...payload },
   }),
 };
 
@@ -68,6 +85,7 @@ const initialState: State = {
   expanded: false,
   isMobileView: false,
   appointmentScheduled: false,
+  showMeetingForm: false,
   meetingData: {
     all_available_slots_for_data: [],
     available_days: [],
@@ -82,6 +100,10 @@ const initialState: State = {
     appointment_group_id: "",
     valid_end_date: "",
     valid_start_date: "",
+    branding: {},
+    description: "",
+    members: [],
+    allow_public_booking: false,
   },
   bookingResponse: {
     event_id: "",
@@ -90,6 +112,10 @@ const initialState: State = {
     message: "",
     reschedule_url: "",
     google_calendar_event_url: "",
+  },
+  guestInfo: {
+    name: "",
+    email: "",
   },
 };
 
