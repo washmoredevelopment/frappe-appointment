@@ -300,7 +300,7 @@ const GroupAppointment = () => {
                                   className="object-cover"
                                 />
                                 <AvatarFallback className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
-                                  {member.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                  {(member.name || '').split(' ').map(n => n?.[0] || '').join('').slice(0, 2).toUpperCase() || '?'}
                                 </AvatarFallback>
                               </Avatar>
                             </TooltipTrigger>

@@ -112,6 +112,10 @@ function show_booking_links_dialog(links) {
   dialog.fields_dict.links_html.$wrapper.on("click", ".copy-link-btn", function () {
     const index = parseInt($(this).data("index"), 10);
     const link = links[index].link;
+    if (!navigator.clipboard) {
+      frappe.msgprint(__("Clipboard API not supported. Please copy the value manually: {0}", [link]));
+      return;
+    }
     navigator.clipboard.writeText(link).then(() => {
       frappe.show_alert({ message: __("Copied!"), indicator: "green" });
     });
