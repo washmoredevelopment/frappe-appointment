@@ -34,6 +34,7 @@ import { Switch } from "@/components/switch";
 import TimeZoneSelect from "../appointment/components/timeZoneSelectmenu";
 import GroupMeetSkeleton from "./components/groupMeetSkeleton";
 import GroupMeetingForm from "./components/groupMeetingForm";
+import Spinner from "@/components/spinner";
 import { Skeleton } from "@/components/skeleton";
 import { getIconForKey, validTitle } from "./utils";
 import { useFrappeGetCall, useFrappePostCall } from "frappe-react-sdk";
@@ -501,6 +502,16 @@ const GroupAppointment = () => {
                             <ArrowLeft className="h-4 w-4" />
                             Back
                           </Button>
+                          {/* Mobile Reschedule Button */}
+                          {reschedule && event_token && state.selectedSlot?.start_time && state.selectedSlot?.end_time && (
+                            <Button
+                              className="bg-blue-500 dark:bg-blue-400 hover:bg-blue-500 dark:hover:bg-blue-400 w-fit px-6"
+                              onClick={() => scheduleMeeting()}
+                              disabled={loading}
+                            >
+                              {loading && <Spinner />} Reschedule
+                            </Button>
+                          )}
                         </div>
                       )}
 
@@ -525,53 +536,69 @@ const GroupAppointment = () => {
                             ))}
                           </div>
                         ) : (
-                          <div className="lg:h-[22rem] mb-3 overflow-y-auto no-scrollbar space-y-2">
-                            {state.meetingData.all_available_slots_for_data.length > 0 ? (
-                              state.meetingData.all_available_slots_for_data.map(
-                                (slot, index) => (
-                                  <Button
-                                    key={index}
-                                    onClick={() => {
-                                      const selectedSlot = {
-                                        start_time: slot.start_time,
-                                        end_time: slot.end_time,
-                                      };
-                                      dispatch({
-                                        type: "SET_SELECTED_SLOT",
-                                        payload: selectedSlot,
-                                      });
-                                      // For public bookings, show the form
-                                      // For non-public bookings (with email params), schedule directly
-                                      if (showGuestForm) {
-                                        dispatch({ type: "SET_SHOW_MEETING_FORM", payload: true });
-                                      } else if (reschedule && event_token) {
-                                        // Handle reschedule - just select the slot
-                                      } else {
-                                        // Non-public booking - schedule directly
-                                        scheduleMeeting(selectedSlot);
-                                      }
-                                    }}
-                                    disabled={loading}
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full font-normal border border-blue-500 dark:border-blue-400 text-blue-500 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-800/10 transition-colors",
-                                      state.selectedSlot?.start_time === slot.start_time &&
-                                      state.selectedSlot?.end_time === slot.end_time &&
-                                      "bg-blue-500 dark:bg-blue-400 text-background dark:text-background hover:bg-blue-500 dark:hover:bg-blue-400 hover:text-background dark:hover:text-background"
-                                    )}
-                                  >
-                                    {formatTimeSlot(new Date(slot.start_time))}
-                                  </Button>
+                          <>
+                            <div className={cn(
+                              "lg:h-[22rem] mb-3 overflow-y-auto no-scrollbar space-y-2",
+                              reschedule && event_token && state.selectedSlot?.start_time && "lg:h-[19rem]"
+                            )}>
+                              {state.meetingData.all_available_slots_for_data.length > 0 ? (
+                                state.meetingData.all_available_slots_for_data.map(
+                                  (slot, index) => (
+                                    <Button
+                                      key={index}
+                                      onClick={() => {
+                                        const selectedSlot = {
+                                          start_time: slot.start_time,
+                                          end_time: slot.end_time,
+                                        };
+                                        dispatch({
+                                          type: "SET_SELECTED_SLOT",
+                                          payload: selectedSlot,
+                                        });
+                                        // For public bookings, show the form
+                                        // For non-public bookings (with email params), schedule directly
+                                        if (showGuestForm) {
+                                          dispatch({ type: "SET_SHOW_MEETING_FORM", payload: true });
+                                        } else if (reschedule && event_token) {
+                                          // Handle reschedule - select slot, button will appear below
+                                        } else {
+                                          // Non-public booking - schedule directly
+                                          scheduleMeeting(selectedSlot);
+                                        }
+                                      }}
+                                      disabled={loading}
+                                      variant="outline"
+                                      className={cn(
+                                        "w-full font-normal border border-blue-500 dark:border-blue-400 text-blue-500 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-800/10 transition-colors",
+                                        state.selectedSlot?.start_time === slot.start_time &&
+                                        state.selectedSlot?.end_time === slot.end_time &&
+                                        "bg-blue-500 dark:bg-blue-400 text-background dark:text-background hover:bg-blue-500 dark:hover:bg-blue-400 hover:text-background dark:hover:text-background"
+                                      )}
+                                    >
+                                      {formatTimeSlot(new Date(slot.start_time))}
+                                    </Button>
+                                  )
                                 )
-                              )
-                            ) : (
-                              <div className="h-full max-md:h-44 w-full flex justify-center items-center">
-                                <Typography className="text-center text-gray-500">
-                                  No open-time slots
-                                </Typography>
-                              </div>
+                              ) : (
+                                <div className="h-full max-md:h-44 w-full flex justify-center items-center">
+                                  <Typography className="text-center text-gray-500">
+                                    No open-time slots
+                                  </Typography>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Reschedule Button */}
+                            {reschedule && event_token && state.selectedSlot?.start_time && state.selectedSlot?.end_time && (
+                              <Button
+                                className="w-full bg-blue-500 dark:bg-blue-400 hover:bg-blue-500 dark:hover:bg-blue-400 max-md:hidden"
+                                onClick={() => scheduleMeeting()}
+                                disabled={loading}
+                              >
+                                {loading && <Spinner />} Reschedule
+                              </Button>
                             )}
-                          </div>
+                          </>
                         )}
                       </div>
                     </motion.div>
