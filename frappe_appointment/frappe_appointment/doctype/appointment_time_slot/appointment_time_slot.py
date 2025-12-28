@@ -120,12 +120,22 @@ def get_google_calendar_slots_member(
         )
 
         if calendar_events is False:
-            # Error fetching from this calendar - continue with others but log the issue
-            frappe.log_error(
-                title="Failed to fetch calendar events",
-                message=f"Could not fetch events from calendar {calendar_id} for member {member}",
-            )
-            continue
+            if is_primary:
+                # Primary calendar fetch failed - this is critical, must return False
+                # to prevent showing false availability (could cause double-bookings)
+                frappe.log_error(
+                    title="Primary calendar fetch failed",
+                    message=f"Could not fetch events from primary calendar {calendar_id} for member {member}",
+                )
+                return False
+            else:
+                # Linked calendar fetch failed - log and continue with others
+                # Linked calendars are secondary; their failure is less critical
+                frappe.log_error(
+                    title="Linked calendar fetch failed",
+                    message=f"Could not fetch events from linked calendar {calendar_id} for member {member}",
+                )
+                continue
 
         if calendar_events:
             all_range_events.extend(calendar_events)
