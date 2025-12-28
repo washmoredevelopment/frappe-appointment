@@ -23,7 +23,14 @@ SLUG_REGEX = re.compile(r"^[a-z0-9_]+(?:-[a-z0-9_]+)*$")
 
 class UserAppointmentAvailability(Document):
     def validate(self):
-        # validate time slots, so that start time is less than end time, and weekdays are unique
+        self.validate_time_slots()
+        self.validate_primary_calendar()
+        self.validate_linked_calendars()
+        self.validate_slug()
+        self.validate_zoom_settings()
+
+    def validate_time_slots(self):
+        """Validate time slots: start time < end time, and weekdays are unique."""
         if self.appointment_time_slot:
             weekdays = []
             for slot in self.appointment_time_slot:
@@ -38,9 +45,43 @@ class UserAppointmentAvailability(Document):
                         )
                     )
                 weekdays.append(slot.day)
+
+    def validate_primary_calendar(self):
+        """Validate that the primary Google Calendar is authorized."""
         calendar = frappe.get_doc("Google Calendar", self.google_calendar)
         if not calendar.custom_is_google_calendar_authorized:
             frappe.throw(frappe._("Please authorize Google Calendar before creating appointment availability."))
+
+    def validate_linked_calendars(self):
+        """Validate linked calendars: no duplicates and all are authorized."""
+        if not self.linked_calendars:
+            return
+
+        seen_calendars = {self.google_calendar}  # Include primary calendar to prevent duplicates
+
+        for linked_cal in self.linked_calendars:
+            # Check for duplicates
+            if linked_cal.calendar in seen_calendars:
+                calendar_name = frappe.get_value("Google Calendar", linked_cal.calendar, "name")
+                frappe.throw(
+                    frappe._("Calendar '{0}' is already added. Please remove the duplicate entry.").format(
+                        linked_cal.label or calendar_name
+                    )
+                )
+            seen_calendars.add(linked_cal.calendar)
+
+            # Check that the calendar is authorized
+            calendar = frappe.get_doc("Google Calendar", linked_cal.calendar)
+            if not calendar.custom_is_google_calendar_authorized:
+                calendar_link = frappe.utils.get_link_to_form("Google Calendar", calendar.name, calendar.name)
+                frappe.throw(
+                    frappe._("Linked calendar '{0}' is not authorized. Please authorize it first: {1}").format(
+                        linked_cal.label or calendar.name, calendar_link
+                    )
+                )
+
+    def validate_slug(self):
+        """Validate slug format and uniqueness."""
         if self.enable_scheduling and not self.slug:
             frappe.throw(frappe._("Please set a slug before enabling scheduling."))
         if self.slug:
@@ -52,24 +93,30 @@ class UserAppointmentAvailability(Document):
                 )
             if frappe.db.exists("User Appointment Availability", {"slug": self.slug, "name": ["!=", self.name]}):
                 frappe.throw(frappe._("Slug already exists. Please set a unique slug."))
-        if self.enable_scheduling and self.meeting_provider == "Zoom":
-            appointment_settings = frappe.get_single("Appointment Settings")
-            appointment_settings_link = frappe.utils.get_link_to_form("Appointment Settings", None, "Appointment Settings")
-            if not appointment_settings.enable_zoom:
-                return frappe.throw(frappe._(f"Zoom is not enabled. Please enable it from {appointment_settings_link}."))
-            if (
-                not appointment_settings.zoom_client_id
-                or not appointment_settings.get_password("zoom_client_secret")
-                or not appointment_settings.zoom_account_id
-            ):
-                return frappe.throw(
-                    frappe._(f"Please set Zoom Account ID, Client ID and Secret in {appointment_settings_link}.")
-                )
-            if not calendar.custom_zoom_user_email:
-                google_calendar_link = frappe.utils.get_link_to_form(
-                    "Google Calendar", calendar.name, "Google Calendar"
-                )
-                return frappe.throw(frappe._(f"Please set Zoom User Email in {google_calendar_link}."))
+
+    def validate_zoom_settings(self):
+        """Validate Zoom configuration if Zoom is selected as meeting provider."""
+        if not (self.enable_scheduling and self.meeting_provider == "Zoom"):
+            return
+
+        appointment_settings = frappe.get_single("Appointment Settings")
+        appointment_settings_link = frappe.utils.get_link_to_form("Appointment Settings", None, "Appointment Settings")
+        if not appointment_settings.enable_zoom:
+            frappe.throw(frappe._(f"Zoom is not enabled. Please enable it from {appointment_settings_link}."))
+        if (
+            not appointment_settings.zoom_client_id
+            or not appointment_settings.get_password("zoom_client_secret")
+            or not appointment_settings.zoom_account_id
+        ):
+            frappe.throw(
+                frappe._(f"Please set Zoom Account ID, Client ID and Secret in {appointment_settings_link}.")
+            )
+        calendar = frappe.get_doc("Google Calendar", self.google_calendar)
+        if not calendar.custom_zoom_user_email:
+            google_calendar_link = frappe.utils.get_link_to_form(
+                "Google Calendar", calendar.name, "Google Calendar"
+            )
+            frappe.throw(frappe._(f"Please set Zoom User Email in {google_calendar_link}."))
 
 
 def suggest_slug(og_slug: str):
