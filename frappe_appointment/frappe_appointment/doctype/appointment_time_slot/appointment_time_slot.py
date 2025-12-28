@@ -67,39 +67,110 @@ def get_google_calendar_slots_member(
     date: datetime,
     appointment_group: object,
 ) -> list:
-    """Fetch the google slots data for given memebr/user
+    """Fetch the google slots data for given member/user from all their calendars.
+
+    This includes the primary calendar and any linked calendars that have
+    'check_for_conflicts' enabled.
 
     Args:
-    member (str): member email
+    member (str): User Appointment Availability name
     starttime (datetime): Start time
     endtime (datetime): end time
     date (datetime): date
     appointment_group (object): object
 
     Returns:
-    list: list of slots of user
+    list: list of busy slots from all user's calendars
     """
 
     if not member:
-        return None
+        return []
 
-    google_calendar_id = frappe.get_value("User Appointment Availability", member, "google_calendar")
+    # Get the User Appointment Availability document to access all calendars
+    try:
+        user_availability = frappe.get_doc("User Appointment Availability", member)
+    except frappe.DoesNotExistError:
+        return []
 
-    if not google_calendar_id:
-        return None
+    if not user_availability.google_calendar:
+        return []
 
-    google_calendar = frappe.get_doc("Google Calendar", google_calendar_id)
+    # Collect all calendars to check: primary + linked calendars with check_for_conflicts enabled
+    calendars_to_check = [user_availability.google_calendar]
+
+    if user_availability.linked_calendars:
+        for linked_cal in user_availability.linked_calendars:
+            if linked_cal.check_for_conflicts and linked_cal.calendar:
+                calendars_to_check.append(linked_cal.calendar)
+
+    # Aggregate events from all calendars
+    all_range_events = []
+    time_max, time_min = get_today_min_max_time(date)
+
+    for idx, calendar_id in enumerate(calendars_to_check):
+        is_primary = (idx == 0)  # First calendar in the list is the primary
+        calendar_events = _fetch_events_from_calendar(
+            calendar_id=calendar_id,
+            member=member,
+            starttime=starttime,
+            endtime=endtime,
+            time_min=time_min,
+            time_max=time_max,
+            is_primary=is_primary,
+        )
+
+        if calendar_events is False:
+            # Error fetching from this calendar - continue with others but log the issue
+            frappe.log_error(
+                title="Failed to fetch calendar events",
+                message=f"Could not fetch events from calendar {calendar_id} for member {member}",
+            )
+            continue
+
+        if calendar_events:
+            all_range_events.extend(calendar_events)
+
+    return all_range_events
+
+
+def _fetch_events_from_calendar(
+    calendar_id: str,
+    member: str,
+    starttime: datetime,
+    endtime: datetime,
+    time_min: str,
+    time_max: str,
+    is_primary: bool = True,
+) -> list:
+    """Fetch events from a single Google Calendar.
+
+    Args:
+    calendar_id (str): Google Calendar doctype name
+    member (str): User Appointment Availability name (for filtering events)
+    starttime (datetime): Start time for range check
+    endtime (datetime): End time for range check
+    time_min (str): ISO format time min for Google API
+    time_max (str): ISO format time max for Google API
+    is_primary (bool): True if this is the primary calendar (applies stricter event filtering)
+
+    Returns:
+    list: List of events in range, or False on error
+    """
+    try:
+        google_calendar = frappe.get_doc("Google Calendar", calendar_id)
+    except frappe.DoesNotExistError:
+        return False
 
     try:
         google_calendar_api_obj, account = get_google_calendar_object(google_calendar.name)
     except Exception:
-        raise GoogleBadRequest(_("Google Calendar - Could not create Google Calendar API object."))
-
-    events = []
+        frappe.log_error(
+            title="Google Calendar API Error",
+            message=f"Could not create Google Calendar API object for {calendar_id}",
+        )
+        return False
 
     try:
-        time_max, time_min = get_today_min_max_time(date)
-
         events = (
             google_calendar_api_obj.events()
             .list(
@@ -112,30 +183,22 @@ def get_google_calendar_slots_member(
             )
             .execute()
         )
-
-        # Fetch availability
-        # ref: https://github.com/rtCamp/frappe-appointment/issues/67
-        # availability = (
-        #     google_calendar_api_obj.freebusy()
-        #     .query(
-        #         body={
-        #             "timeMin": time_min,
-        #             "timeMax": time_max,
-        #             "items": [{"id": google_calendar.google_calendar_id}],
-        #         }
-        #     )
-        #     .execute()
-        # )
     except Exception as err:
-        frappe.throw(
-            _("Google Calendar - Could not fetch event from Google Calendar, error code {0}.").format(err.resp.status)
+        error_status = getattr(getattr(err, "resp", None), "status", "unknown")
+        frappe.log_error(
+            title="Google Calendar Fetch Error",
+            message=f"Could not fetch events from {calendar_id}, error: {error_status}",
         )
+        return False
 
-    events_items = events["items"]
+    events_items = events.get("items", [])
     range_events = []
 
     for event in events_items:
         try:
+            # For the primary calendar, apply strict attendee filtering (original behavior):
+            # - Skip events where user is not the creator AND not an attendee
+            # For linked/external calendars, include all events as busy
             creator = event.get("creator", {}).get("email")
             if creator != member:
                 attendees = event.get("attendees", [])
@@ -147,7 +210,10 @@ def get_google_calendar_slots_member(
                     if attendee.get("responseStatus") == "declined":
                         continue
                 else:
-                    continue
+                    # For primary calendar: skip if not creator and not an attendee (original behavior)
+                    # For linked calendars: include all events (they block availability)
+                    if is_primary:
+                        continue
 
             if check_if_datetime_in_range(
                 convert_timezone_to_utc(event["start"]["dateTime"], event["start"]["timeZone"]),
@@ -157,7 +223,8 @@ def get_google_calendar_slots_member(
             ):
                 range_events.append(event)
         except Exception:
-            if "timeZone" not in event["start"] and google_calendar.custom_ignore_all_day_events:
+            # Handle all-day events which don't have timeZone
+            if "timeZone" not in event.get("start", {}) and google_calendar.custom_ignore_all_day_events:
                 pass
             else:
                 return False

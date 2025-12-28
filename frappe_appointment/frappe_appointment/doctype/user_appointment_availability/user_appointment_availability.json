@@ -11,6 +11,8 @@
  "field_order": [
   "user",
   "google_calendar",
+  "additional_calendars_section",
+  "linked_calendars",
   "appointment_time_slot",
   "personal_meetings_section",
   "enable_scheduling",
@@ -43,7 +45,22 @@
    "fieldtype": "Link",
    "label": "Google Calendar",
    "options": "Google Calendar",
-   "reqd": 1
+   "reqd": 1,
+   "description": "Primary calendar where appointments will be created"
+  },
+  {
+   "fieldname": "additional_calendars_section",
+   "fieldtype": "Section Break",
+   "label": "Additional Calendars",
+   "collapsible": 1,
+   "description": "Add calendars to check for conflicts when determining availability. Events from these calendars will block time slots."
+  },
+  {
+   "fieldname": "linked_calendars",
+   "fieldtype": "Table",
+   "label": "Linked Calendars",
+   "options": "Linked Calendar",
+   "description": "Additional calendars to check for scheduling conflicts"
   },
   {
    "default": "0",

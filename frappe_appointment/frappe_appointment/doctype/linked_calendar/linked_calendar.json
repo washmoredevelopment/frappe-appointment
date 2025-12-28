@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "creation": "2024-12-28 12:00:00.000000",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "calendar",
+  "label",
+  "check_for_conflicts"
+ ],
+ "fields": [
+  {
+   "fieldname": "calendar",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Calendar",
+   "options": "Google Calendar",
+   "reqd": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "description": "A friendly name for this calendar (e.g., Personal Gmail, Side Business)"
+  },
+  {
+   "default": "1",
+   "fieldname": "check_for_conflicts",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Check for Conflicts",
+   "description": "If enabled, events from this calendar will block availability"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-12-28 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Frappe Appointment",
+ "name": "Linked Calendar",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
+
